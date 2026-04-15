@@ -11,20 +11,20 @@ const loader = document.getElementById('mainLoader');
 startBtn.addEventListener('click', async () => {
     const serviceName = document.getElementById('serviceName').value.trim();
     const keywordsRaw = document.getElementById('keywords').value.trim();
-    
+
     if (!serviceName) {
         alert('Vui lòng nhập tên dịch vụ');
         return;
     }
 
     const keywords = keywordsRaw.split(',').map(k => k.trim().toLowerCase()).filter(k => k);
-    
+
     // Reset UI
     filteredData = [];
     resultsTableBody.innerHTML = '';
     totalItemsEl.innerText = '0';
     filteredItemsEl.innerText = '0';
-    
+
     startBtn.disabled = true;
     exportBtn.disabled = true;
     loader.style.display = 'inline-block';
@@ -63,7 +63,7 @@ chrome.runtime.onMessage.addListener((message) => {
         const item = message.item;
         filteredData.push(item);
         filteredItemsEl.innerText = filteredData.length;
-        
+
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${item.name}</td>

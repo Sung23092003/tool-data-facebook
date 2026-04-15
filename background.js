@@ -32,10 +32,10 @@ async function sendMessageWithRetry(tabId, message, retries = 5) {
 async function startScraping() {
     allResults = [];
     filteredResults = [];
-    
+
     // Step 1: Search Pages
     const url = `https://www.facebook.com/search/pages?q=${encodeURIComponent(currentConfig.serviceName)}`;
-    
+
     // Find if we already have a FB search tab
     const tabs = await chrome.tabs.query({ url: "*://www.facebook.com/search/pages*" });
     let tab;
@@ -58,17 +58,17 @@ async function startScraping() {
 
 async function initScrapeSequence() {
     chrome.runtime.sendMessage({ action: 'statusUpdate', text: 'Đang cào danh sách trang từ kết quả tìm kiếm...' });
-    
+
     try {
         const response = await sendMessageWithRetry(searchTabId, { action: 'scrollAndScrape' });
-        
+
         if (response && response.results) {
             allResults = response.results;
-            
+
             // Step 2: Filter results
             const keywords = currentConfig.keywords;
             const serviceName = currentConfig.serviceName.toLowerCase();
-            
+
             filteredResults = allResults.filter(item => {
                 const title = item.name.toLowerCase();
                 // Check service name AND any of the keywords
@@ -77,10 +77,10 @@ async function initScrapeSequence() {
                 return hasService && hasKeyword;
             });
 
-            chrome.runtime.sendMessage({ 
-                action: 'progressUpdate', 
-                total: allResults.length, 
-                filtered: filteredResults.length 
+            chrome.runtime.sendMessage({
+                action: 'progressUpdate',
+                total: allResults.length,
+                filtered: filteredResults.length
             });
 
             if (filteredResults.length > 0) {
@@ -101,11 +101,11 @@ async function initScrapeSequence() {
 async function scrapeDetailsSequential() {
     for (let i = 0; i < filteredResults.length; i++) {
         const item = filteredResults[i];
-        chrome.runtime.sendMessage({ action: 'statusUpdate', text: `Đang quét (${i+1}/${filteredResults.length}): ${item.name}` });
-        
+        chrome.runtime.sendMessage({ action: 'statusUpdate', text: `Đang quét (${i + 1}/${filteredResults.length}): ${item.name}` });
+
         try {
             await chrome.tabs.update(searchTabId, { url: item.url });
-            
+
             // Wait for detail page load
             await new Promise((resolve, reject) => {
                 const timeout = setTimeout(() => {
@@ -124,7 +124,7 @@ async function scrapeDetailsSequential() {
             });
 
             const details = await sendMessageWithRetry(searchTabId, { action: 'extractDetails' });
-            
+
             const processedItem = {
                 ...item,
                 address: details?.address || '',
@@ -132,16 +132,16 @@ async function scrapeDetailsSequential() {
                 email: details?.email || ''
             };
 
-            chrome.runtime.sendMessage({ 
-                action: 'itemProcessed', 
-                item: processedItem 
+            chrome.runtime.sendMessage({
+                action: 'itemProcessed',
+                item: processedItem
             });
 
         } catch (e) {
             console.error('Error details for', item.url, e);
-            chrome.runtime.sendMessage({ 
-                action: 'itemProcessed', 
-                item: { ...item, address: 'Lỗi kết nối', phone: '', email: '' } 
+            chrome.runtime.sendMessage({
+                action: 'itemProcessed',
+                item: { ...item, address: 'Lỗi kết nối', phone: '', email: '' }
             });
         }
     }
