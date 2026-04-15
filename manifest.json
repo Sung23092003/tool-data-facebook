@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Facebook Data Scraper",
+  "version": "1.1",
+  "description": "Scrape name, address, and phone from Facebook Pages search results.",
+  "permissions": [
+    "tabs",
+    "scripting",
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://*.facebook.com/*"
+  ],
+  "action": {
+    "default_popup": "launch.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.facebook.com/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ]
+}

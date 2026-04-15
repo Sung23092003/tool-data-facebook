@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Data Scanner</title>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+            --text: #f8fafc;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--glass);
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            background: linear-gradient(to right, #60a5fa, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 16px;
+            background: var(--glass);
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            align-items: end;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #94a3b8;
+        }
+
+        input, textarea {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 12px;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            height: 48px;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background: #475569;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #exportBtn {
+            background: #10b981;
+        }
+
+        #exportBtn:hover {
+            background: #059669;
+        }
+
+        .status-card {
+            background: var(--glass);
+            padding: 16px 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #statusText {
+            font-size: 14px;
+            color: #cbd5e1;
+        }
+
+        .stats {
+            display: flex;
+            gap: 24px;
+            font-size: 14px;
+        }
+
+        .stat-item span {
+            color: #94a3b8;
+            margin-right: 4px;
+        }
+
+        .stat-item b {
+            color: #60a5fa;
+        }
+
+        .table-container {
+            background: var(--glass);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.02);
+            text-align: left;
+            padding: 16px;
+            color: #94a3b8;
+            font-weight: 500;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            color: #e2e8f0;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .link-cell a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+
+        .link-cell a:hover {
+            text-decoration: underline;
+        }
+
+        .loader {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #334155;
+            border-top: 2px solid #60a5fa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .running .loader {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="app">
+        <header>
+            <h1>Facebook Data Scanner</h1>
+            <div class="loader" id="mainLoader"></div>
+        </header>
+        
+        <div class="controls">
+            <div class="input-group">
+                <label for="serviceName">Tên dịch vụ</label>
+                <input type="text" id="serviceName" placeholder="Ví dụ: Trung tâm tiếng anh">
+            </div>
+
+            <div class="input-group">
+                <label for="keywords">Từ cần chứa (cách nhau bằng dấu phẩy)</label>
+                <input type="text" id="keywords" placeholder="Ví dụ: Trung, Anh, Ngôn Ngữ">
+            </div>
+
+            <div class="btn-container">
+                <button id="startBtn">Bắt đầu quét</button>
+                <button id="exportBtn" disabled>Xuất dữ liệu</button>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <div id="statusText">Sẵn sàng để quét...</div>
+            <div class="stats">
+                <div class="stat-item"><span>Tổng:</span> <b id="totalItems">0</b></div>
+                <div class="stat-item"><span>Hợp lệ:</span> <b id="filteredItems">0</b></div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%">Tên Page</th>
+                        <th style="width: 30%">Địa chỉ</th>
+                        <th style="width: 20%">Số điện thoại</th>
+                        <th style="width: 25%">Link</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTableBody">
+                    <!-- Results will be injected here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="libs/xlsx.full.min.js"></script>
+    <script src="scanner.js"></script>
+</body>
+</html>
